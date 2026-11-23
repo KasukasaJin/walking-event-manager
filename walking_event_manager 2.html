@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#171719">
+<title>徒歩企画 管理ツール</title>
+<style>
+:root{color-scheme:dark;--bg:#111113;--panel:#1d1d21;--panel2:#27272d;--line:#393940;--text:#f5f5f7;--muted:#aaaab3;--red:#d94b50;--gold:#d8b66a;--green:#7fc49a;--blue:#83aee8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);font-size:15px}
+button,input{font:inherit}
+button{border:0;color:var(--text);background:var(--panel2);border-radius:12px;min-height:46px;padding:10px 14px;font-weight:700}
+button:active{filter:brightness(1.25);transform:scale(.985)}
+button.primary{background:var(--red)}
+button.gold{background:#665126;color:#fff1c9}
+button.ghost{background:transparent;border:1px solid var(--line)}
+button.small{min-height:38px;padding:7px 11px;font-size:13px}
+input{width:100%;background:#101013;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font-size:18px;min-height:48px}
+.wrap{max-width:520px;margin:auto;padding:12px 14px 24px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 2px 14px}
+.brand{font-weight:900;font-size:18px;letter-spacing:.03em}
+.brand span{color:var(--red)}
+.sub{font-size:11px;color:var(--muted);margin-top:3px}
+.top-actions{display:flex;gap:6px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:14px;position:sticky;top:0;background:var(--bg);padding:5px 0 10px;z-index:5}
+.tab{padding:9px 2px;min-height:54px;font-size:11px;line-height:1.25;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.tab b{display:block;font-size:18px;margin-bottom:3px;color:var(--text)}
+.tab.active{border-color:var(--red);background:#382124;color:#fff}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px;margin-bottom:12px}
+h1{font-size:22px;margin:0 0 5px}
+h2{font-size:16px;margin:0 0 12px}
+.desc{color:var(--muted);font-size:12px;line-height:1.55}
+.big{font-size:36px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.unit{font-size:14px;color:var(--muted);font-weight:600;margin-left:4px}
+.statrow{display:flex;justify-content:space-between;align-items:end;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions>*{flex:1}
+.field{margin:12px 0}
+.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.allowance-quick button{font-size:13px;padding:7px 3px;min-height:42px}
+.quick button{min-height:43px}
+.note{padding:10px 12px;border-radius:11px;background:#292329;color:#d9c7c7;font-size:12px;line-height:1.5}
+.result{font-size:20px;font-weight:900;margin:8px 0}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--muted);font-size:11px}
+.progress{height:9px;border-radius:99px;background:#393940;overflow:hidden;margin:10px 0}
+.progress>i{display:block;height:100%;background:var(--gold);width:0}
+.list{display:flex;flex-direction:column;gap:7px}
+.entry{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;background:#151518;border-radius:11px;font-size:13px}
+.entry small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.amount{font-weight:800;font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.hidden{display:none!important}
+footer{color:var(--muted);font-size:10px;text-align:center;padding:12px 0}
+.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#f5f5f5;color:#111;padding:10px 15px;border-radius:999px;font-weight:800;font-size:13px;z-index:20;display:none;white-space:nowrap}
+@media(max-width:360px){.wrap{padding-left:10px;padding-right:10px}.tab{font-size:10px}.big{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div><div class="brand"><span>神</span> 徒歩企画 管理</div><div class="sub">2026.11.24 ・ 9,659歩 ・ S1 +4</div></div>
+ <div class="top-actions"><button class="ghost small" onclick="exportData()">保存書出</button><button class="ghost small" onclick="document.getElementById('importFile').click()">読込</button></div>
+</header>
+<input id="importFile" type="file" accept="application/json,.json" class="hidden" onchange="importData(event)">
+<nav class="tabs">
+ <button class="tab active" data-tab="allowance" onclick="showTab('allowance')"><b>¥</b>おこづかい</button>
+ <button class="tab" data-tab="trial" onclick="showTab('trial')"><b>⚡</b>試練</button>
+ <button class="tab" data-tab="party" onclick="showTab('party')"><b>✦</b>慰労会</button>
+ <button class="tab" data-tab="lottery" onclick="showTab('lottery')"><b>🎲</b>神託</button>
+ <button class="tab" data-tab="history" onclick="showTab('history')"><b>≡</b>履歴</button>
+</nav>
+
+<section id="allowance" class="page">
+ <div class="card">
+  <div class="statrow"><div><h1>おこづかい</h1><div class="desc">ギフトptの1/2を追加・購入時に減算</div></div><span class="pill">上限なし</span></div>
+  <div class="big" id="allowanceBalance">0<span class="unit">円</span></div>
+  <hr>
+  <div class="field"><label>ギフトptを入力（追加額は自動で半分）</label><input id="allowancePts" type="number" min="0" inputmode="numeric" placeholder="例：1000"></div>
+  <div class="quick allowance-quick">
+   <button onclick="addAllowanceQuick(5)">5pt</button><button onclick="addAllowanceQuick(10)">10pt</button><button onclick="addAllowanceQuick(100)">100pt</button>
+   <button onclick="addAllowanceQuick(200)">200pt</button><button onclick="addAllowanceQuick(300)">300pt</button><button onclick="addAllowanceQuick(500)">500pt</button>
+   <button onclick="addAllowanceQuick(1000)">1,000pt</button><button onclick="addAllowanceQuick(2000)">2,000pt</button><button onclick="addAllowanceQuick(3000)">3,000pt</button>
+   <button onclick="addAllowanceQuick(5000)">5,000pt</button><button onclick="addAllowanceQuick(7000)">7,000pt</button><button onclick="addAllowanceQuick(10000)">10,000pt</button>
+   <button onclick="addAllowanceQuick(30000)">30,000pt</button>
+  </div>
+  <button class="primary" style="width:100%;margin-top:9px" onclick="addAllowance()">おこづかいに追加</button>
+  <div class="field"><label>購入金額（円）</label><input id="allowanceSpend" type="number" min="0" inputmode="numeric" placeholder="例：160"></div>
+  <button class="ghost" style="width:100%" onclick="spendAllowance()">購入分を減算</button>
+ </div>
+ <div class="card"><h2>使い方</h2><div class="desc">自販機・コンビニで好きなものを購入。ギフトによる追加と、実際に使った金額を別々に記録するよ。</div></div>
+</section>
+
+<section id="trial" class="page hidden">
+ <div class="card">
+  <h1>試練</h1><div class="desc">500ptで1回引く独立ガチャ。累計・繰り越しはありません。</div>
+  <div class="big" id="trialCount">0<span class="unit">回</span></div>
+  <div class="desc">これまでの試練回数</div>
+  <button class="gold" style="width:100%;margin-top:14px;min-height:58px;font-size:18px" onclick="drawTrial()">500ptで試練を1回引く</button>
+  <div id="trialResult" class="result" style="text-align:center;margin-top:16px"></div>
+  <div class="desc">試練の候補：100歩ダッシュ／スクワット10回／腿上げ20回</div>
+ </div>
+</section>
+
+<section id="party" class="page hidden">
+ <div class="card">
+  <div class="statrow"><div><h1>神への慰労会</h1><div class="desc">対象ギフトptの1/10を追加</div></div><span class="pill">上限3,000円</span></div>
+  <div class="big" id="partyBalance">0<span class="unit">円</span></div>
+  <div class="progress"><i id="partyBar"></i></div>
+  <div class="statrow"><span class="desc">上限まで</span><b id="partyRemaining">3,000円</b></div>
+  <hr>
+  <div class="field"><label>対象ギフトpt（1,000pt以上）</label><input id="partyPts" type="number" min="0" inputmode="numeric" placeholder="例：5000"></div>
+  <div class="quick"><button onclick="setVal('partyPts',1000)">1,000pt</button><button onclick="setVal('partyPts',5000)">5,000pt</button><button onclick="setVal('partyPts',10000)">10,000pt</button></div>
+  <button class="primary" style="width:100%;margin-top:9px" onclick="addParty()">慰労会予算に追加</button>
+  <div class="note" style="margin-top:12px">1,000pt未満は対象外。上限到達後は追加されない。徒歩企画当日にお疲れ会を開催。</div>
+ </div>
+</section>
+
+<section id="lottery" class="page hidden">
+ <div class="card">
+  <div class="statrow"><div><h1>神託ガチャ</h1><div class="desc">1回300pt</div></div><span class="pill">全6種類</span></div>
+  <div class="grid2" style="margin-top:14px">
+   <div><div class="desc">抽選回数</div><div class="big" id="drawCount">0<span class="unit">回</span></div></div>
+   <div><div class="desc">使用pt</div><div class="big" id="drawSpent">0<span class="unit">pt</span></div></div>
+  </div>
+  <button class="gold" style="width:100%;margin-top:14px;min-height:58px;font-size:18px" onclick="drawOracle()">300ptで神託を引く</button>
+  <div id="oracleResult" class="result" style="text-align:center;margin-top:16px"></div>
+  <div id="oracleEffect" class="desc" style="text-align:center"></div>
+ </div>
+ <div class="card">
+  <h2>出現確率</h2>
+  <div class="list" id="probList"></div>
+  <div class="desc" style="margin-top:9px">大吉1%／吉15%／中吉20%／小吉44%／凶15%／大凶5%</div>
+ </div>
+</section>
+
+<section id="history" class="page hidden">
+ <div class="card">
+  <div class="statrow"><h1>操作履歴</h1><button class="ghost small" onclick="undoLast()">直前を取り消す</button></div>
+  <div class="desc" style="margin:4px 0 12px">追加・減算・抽選の記録。取り消すと数字も元に戻るよ。</div>
+  <div id="historyList" class="list"></div>
+  <div id="emptyHistory" class="desc">まだ履歴はありません。</div>
+ </div>
+ <div class="card">
+  <h2>データ管理</h2>
+  <div class="desc">データはこの端末のブラウザ内に保存する設計。定期的に「保存書出」でバックアップしてね。</div>
+  <div class="actions"><button class="ghost" onclick="exportData()">バックアップを書き出す</button><button class="ghost" onclick="document.getElementById('importFile').click()">バックアップを読み込む</button></div>
+  <button class="ghost" style="width:100%;margin-top:9px;color:#ffaaaa" onclick="resetAll()">全データをリセット</button>
+ </div>
+</section>
+<footer>端末内保存・オフライン利用想定 ／ データ消去・端末変更に備えてバックアップを保存してください。</footer>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const KEY='himaji_walk_tool_v1';
+const defaults=()=>({allowance:0,trialCount:0,party:0,drawCount:0,drawSpent:0,history:[]});
+let state=load();
+function load(){try{return Object.assign(defaults(),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return defaults()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast('端末への保存に失敗。バックアップしてね')}}
+function setVal(id,v){document.getElementById(id).value=v}
+function toast(s){let t=document.getElementById('toast');t.textContent=s;t.style.display='block';clearTimeout(window._toast);window._toast=setTimeout(()=>t.style.display='none',1800)}
+function snapshot(){return {allowance:state.allowance,trialCount:state.trialCount,party:state.party,drawCount:state.drawCount,drawSpent:state.drawSpent};}
+function log(type,detail,before){state.history.unshift({time:new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),type,detail,before});if(state.history.length>100)state.history.pop();save();render()}
+function showTab(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));}
+function yen(n){return Math.floor(n).toLocaleString('ja-JP')+'円'}
+function addAllowanceQuick(p){let before=snapshot();let a=Math.floor(p/2);state.allowance+=a;log('おこづかい追加',`${p.toLocaleString()}pt → ＋${yen(a)}`,before);toast(`${yen(a)}追加！`)}
+function addAllowance(){let p=Number(document.getElementById('allowancePts').value);if(!Number.isFinite(p)||p<=0)return toast('ギフトptを入力してね');let before=snapshot();let a=Math.floor(p/2);state.allowance+=a;document.getElementById('allowancePts').value='';log('おこづかい追加',`${p.toLocaleString()}pt → ＋${yen(a)}`,before);toast(`${yen(a)}追加！`)}
+function spendAllowance(){let a=Number(document.getElementById('allowanceSpend').value);if(!Number.isFinite(a)||a<=0)return toast('購入金額を入力してね');if(a>state.allowance)return toast('おこづかいが足りないよ');let before=snapshot();state.allowance-=a;document.getElementById('allowanceSpend').value='';log('おこづかい使用',`−${yen(a)}`,before);toast(`${yen(a)}減算したよ`)}
+const trials=['100歩ダッシュ','スクワット10回','腿上げ20回'];
+function drawTrial(){let before=snapshot();let r=trials[Math.floor(Math.random()*trials.length)];state.trialCount++;document.getElementById('trialResult').textContent='今回の試練：'+r;log('試練ガチャ',r,before);}
+function addParty(){let p=Number(document.getElementById('partyPts').value);if(!Number.isFinite(p)||p<1000)return toast('1,000pt以上を入力してね');if(state.party>=3000)return toast('慰労会予算は上限に達しているよ');let before=snapshot();let a=Math.min(3000-state.party,Math.floor(p/10));if(a<=0)return toast('追加できる予算がないよ');state.party+=a;document.getElementById('partyPts').value='';log('慰労会予算追加',`${p.toLocaleString()}pt → ＋${yen(a)}`,before);toast(`${yen(a)}追加！`)}
+const outcomes=[
+ {name:'大吉',p:1,effect:'お疲れ会予算＋100円',fn:()=>{let a=Math.min(100,3000-state.party);state.party+=a;return a?`慰労会予算＋${a}円`:'慰労会予算は上限到達済み'},color:'gold'},
+ {name:'吉',p:15,effect:'おこづかい＋300円',fn:()=>{state.allowance+=300;return 'おこづかい＋300円'},color:'gold'},
+ {name:'中吉',p:20,effect:'次の自販機で必ず飲み物を1本購入。何を買うかは引いた人が決める！',fn:()=> '次の自販機で飲み物を1本購入。銘柄は引いた人が指定！',color:'green'},
+ {name:'小吉',p:44,effect:'その場で腿上げ10回',fn:()=> 'その場で腿上げ10回',color:''},
+ {name:'凶',p:15,effect:'スクワット10回',fn:()=> 'スクワット10回',color:''},
+ {name:'大凶',p:5,effect:'100歩ダッシュ',fn:()=> '100歩ダッシュ（安全な場所のみ）',color:'red'}
+];
+function drawOracle(){let before=snapshot();state.drawCount++;state.drawSpent+=300;let n=Math.random()*100,acc=0,o=outcomes.find(x=>(acc+=x.p)>n)||outcomes[outcomes.length-1];let effect=o.fn();document.getElementById('oracleResult').textContent=o.name+'！';document.getElementById('oracleEffect').textContent=effect;log('神託ガチャ',`${o.name}：${effect}`,before);}
+function undoLast(){let h=state.history.shift();if(!h)return toast('取り消す履歴がないよ');if(h.before){for(let k of Object.keys(h.before))state[k]=h.before[k]}save();render();toast('直前の操作を取り消したよ')}
+function exportData(){let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='徒歩企画バックアップ.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('バックアップを書き出したよ')}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);state=Object.assign(defaults(),x);save();render();toast('バックアップを読み込んだよ')}catch(err){toast('読み込みに失敗したよ')}};r.readAsText(f);e.target.value=''}
+function resetAll(){if(!confirm('すべての数字と履歴を消去する？'))return;state=defaults();save();render();toast('リセットしたよ')}
+function render(){
+ document.getElementById('allowanceBalance').innerHTML=state.allowance.toLocaleString('ja-JP')+'<span class="unit">円</span>';
+ document.getElementById('trialCount').innerHTML=state.trialCount.toLocaleString('ja-JP')+'<span class="unit">回</span>';
+ document.getElementById('partyBalance').innerHTML=state.party.toLocaleString('ja-JP')+'<span class="unit">円</span>';
+ document.getElementById('partyBar').style.width=(state.party/3000*100)+'%';
+ document.getElementById('partyRemaining').textContent=yen(3000-state.party);
+ document.getElementById('drawCount').innerHTML=state.drawCount+'<span class="unit">回</span>';
+ document.getElementById('drawSpent').innerHTML=state.drawSpent.toLocaleString('ja-JP')+'<span class="unit">pt</span>';
+ document.getElementById('historyList').innerHTML=state.history.map(h=>`<div class="entry"><div><b>${esc(h.type)}</b><small>${esc(h.time)} ・ ${esc(h.detail)}</small></div></div>`).join('');
+ document.getElementById('emptyHistory').classList.toggle('hidden',state.history.length>0);
+ document.getElementById('probList').innerHTML=outcomes.map(o=>`<div class="entry"><b>${o.name}</b><span class="amount">${o.p}%</span></div>`).join('');
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+render();
+</script>
+</body></html>
